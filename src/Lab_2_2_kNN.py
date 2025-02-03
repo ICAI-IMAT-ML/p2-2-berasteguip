@@ -58,8 +58,8 @@ class knn:
         if type(p) != int or p <= 0:
             raise ValueError('p debe ser un entero positivo.')
         
-        self.x_train = X_train
-        self.y_train = y_train
+        self.x_train = np.array(X_train)
+        self.y_train = np.array(y_train)
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -71,8 +71,15 @@ class knn:
         Returns:
             np.ndarray: Predicted class labels.
         """
-        return    
+
+        preds = []
+        for point in X:
+            distances = self.compute_distances(point)
+            k_nearest_indices = self.get_k_nearest_neighbors(distances)
+            k_nearest_labels = self.y_train[k_nearest_indices]
+            preds.append(self.most_common_label(k_nearest_labels))
         
+        return np.array(preds)
 
     def predict_proba(self, X):
         """
@@ -87,7 +94,15 @@ class knn:
         Returns:
             np.ndarray: Predicted class probabilities.
         """
-        return
+        
+        probs = []
+        for point in X:
+            distances = self.compute_distances(point)
+            k_nearest_indices = self.get_k_nearest_neighbors(distances)
+            k_nearest_labels = self.y_train[k_nearest_indices]
+            probs.append(np.sum(k_nearest_labels) / self.k)
+        
+        return np.array(probs)
 
     def compute_distances(self, point: np.ndarray) -> np.ndarray:
         """Compute distance from a point to every point in the training dataset
