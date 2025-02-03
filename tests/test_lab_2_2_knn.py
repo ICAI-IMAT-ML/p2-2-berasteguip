@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from src.Lab_2_2_kNN import *
+from ..src.Lab_2_2_kNN import *
 import matplotlib
 matplotlib.use('Agg')
 

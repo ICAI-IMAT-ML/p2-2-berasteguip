@@ -18,8 +18,8 @@ def minkowski_distance(a, b, p=2):
     Returns:
         float: Minkowski distance between arrays a and b.
     """
-
-    # TODO
+    n = len(a)
+    return (sum([abs(a[i]-b[i])**p for i in range(n)]))**(1/p)
 
 
 # k-Nearest Neighbors Model
@@ -50,7 +50,16 @@ class knn:
             k (int, optional): Number of neighbors to use. Defaults to 5.
             p (int, optional): The degree of the Minkowski distance. Defaults to 2.
         """
-        # TODO
+
+        if len(X_train) != len(y_train):
+            raise Exception('El array de entrada y de salida deben tener la misma longitud.')
+        if type(k) != int or k <= 0:
+            raise ValueError('k debe ser un entero positivo.')
+        if type(p) != int or p <= 0:
+            raise ValueError('p debe ser un entero positivo.')
+        
+        self.x_train = X_train
+        self.y_train = y_train
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -62,7 +71,8 @@ class knn:
         Returns:
             np.ndarray: Predicted class labels.
         """
-        # TODO
+        return    
+        
 
     def predict_proba(self, X):
         """
@@ -77,7 +87,7 @@ class knn:
         Returns:
             np.ndarray: Predicted class probabilities.
         """
-        # TODO
+        return
 
     def compute_distances(self, point: np.ndarray) -> np.ndarray:
         """Compute distance from a point to every point in the training dataset
@@ -88,7 +98,7 @@ class knn:
         Returns:
             np.ndarray: distance from point to each point in the training dataset.
         """
-        # TODO
+        return [minkowski_distance(point, other, p= self.p) for other in self.x_train]
 
     def get_k_nearest_neighbors(self, distances: np.ndarray) -> np.ndarray:
         """Get the k nearest neighbors indices given the distances matrix from a point.
@@ -102,7 +112,8 @@ class knn:
         Hint:
             You might want to check the np.argsort function.
         """
-        # TODO
+        sorted_idxs = np.argsort(distances)
+        return sorted_idxs[:self.k]
 
     def most_common_label(self, knn_labels: np.ndarray) -> int:
         """Obtain the most common label from the labels of the k nearest neighbors
@@ -113,7 +124,8 @@ class knn:
         Returns:
             int: most common label
         """
-        # TODO
+        counts = np.bincount(knn_labels)
+        return np.argmax(counts)
 
     def __str__(self):
         """
@@ -235,14 +247,14 @@ def evaluate_classification_metrics(y_true, y_pred, positive_label):
     # F1 Score
     # TODO
 
-    return {
+    """return {
         "Confusion Matrix": [tn, fp, fn, tp],
         "Accuracy": accuracy,
         "Precision": precision,
         "Recall": recall,
         "Specificity": specificity,
         "F1 Score": f1,
-    }
+    }"""
 
 
 
@@ -270,7 +282,7 @@ def plot_calibration_curve(y_true, y_probs, positive_label, n_bins=10):
 
     """
     # TODO
-    return {"bin_centers": bin_centers, "true_proportions": true_proportions}
+    """return {"bin_centers": bin_centers, "true_proportions": true_proportions}"""
 
 
 
@@ -301,10 +313,10 @@ def plot_probability_histograms(y_true, y_probs, positive_label, n_bins=10):
     """
     # TODO
 
-    return {
+    """return {
         "array_passed_to_histogram_of_positive_class": y_probs[y_true_mapped == 1],
         "array_passed_to_histogram_of_negative_class": y_probs[y_true_mapped == 0],
-    }
+    }"""
 
 
 
@@ -330,4 +342,4 @@ def plot_roc_curve(y_true, y_probs, positive_label):
 
     """
     # TODO
-    return {"fpr": np.array(fpr), "tpr": np.array(tpr)}
+    """return {"fpr": np.array(fpr), "tpr": np.array(tpr)}"""
