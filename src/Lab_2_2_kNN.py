@@ -100,7 +100,7 @@ class knn:
             distances = self.compute_distances(point)
             k_nearest_indices = self.get_k_nearest_neighbors(distances)
             k_nearest_labels = self.y_train[k_nearest_indices]
-            probs.append(np.sum(k_nearest_labels) / self.k)
+            probs.append(np.bincount(k_nearest_labels) / self.k)
         
         return np.array(probs)
 
@@ -150,7 +150,7 @@ class knn:
 
 
 
-def plot_2Dmodel_predictions(X, y, model, grid_points_n):
+def plot_2Dmodel_predictions(X, y, model: knn, grid_points_n):
     """
     Plot the classification results and predicted probabilities of a model on a 2D grid.
 
@@ -245,31 +245,34 @@ def evaluate_classification_metrics(y_true, y_pred, positive_label):
     y_pred_mapped = np.array([1 if label == positive_label else 0 for label in y_pred])
 
     # Confusion Matrix
-    # TODO
+    tp = np.sum((y_true == positive_label) & (y_pred == positive_label))
+    fp = np.sum((y_true != positive_label) & (y_pred == positive_label))
+    fn = np.sum((y_true == positive_label) & (y_pred != positive_label))
+    tn = np.sum((y_true != positive_label) & (y_pred != positive_label))
 
     # Accuracy
-    # TODO
+    accuracy = (tp + tn) / (tp + tn + fp + fn)
 
     # Precision
-    # TODO
+    precision = tp / (tp + fp)
 
     # Recall (Sensitivity)
-    # TODO
+    recall = tp / (tp + fn)
 
     # Specificity
-    # TODO
+    specificity = tn / (tn + fp)
 
     # F1 Score
-    # TODO
+    f1 = 2 * (precision * recall) / (precision + recall)
 
-    """return {
+    return {
         "Confusion Matrix": [tn, fp, fn, tp],
         "Accuracy": accuracy,
         "Precision": precision,
         "Recall": recall,
         "Specificity": specificity,
         "F1 Score": f1,
-    }"""
+    }
 
 
 
