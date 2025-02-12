@@ -52,14 +52,15 @@ class knn:
         """
 
         if len(X_train) != len(y_train):
-            raise Exception('El array de entrada y de salida deben tener la misma longitud.')
-        if type(k) != int or k <= 0:
-            raise ValueError('k debe ser un entero positivo.')
-        if type(p) != int or p <= 0:
-            raise ValueError('p debe ser un entero positivo.')
+            raise ValueError("Length of X_train and y_train must be equal.")
+        if type(k) != int or k <= 0 or type(p) != int or p <= 0:
+            raise ValueError('k and p must be positive integers.')
         
         self.x_train = np.array(X_train)
         self.y_train = np.array(y_train)
+
+        self.k = k
+        self.p = p
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -113,7 +114,8 @@ class knn:
         Returns:
             np.ndarray: distance from point to each point in the training dataset.
         """
-        return [minkowski_distance(point, other, p= self.p) for other in self.x_train]
+
+        return np.array([minkowski_distance(point, other, p= self.p) for other in self.x_train])
 
     def get_k_nearest_neighbors(self, distances: np.ndarray) -> np.ndarray:
         """Get the k nearest neighbors indices given the distances matrix from a point.
@@ -254,16 +256,16 @@ def evaluate_classification_metrics(y_true, y_pred, positive_label):
     accuracy = (tp + tn) / (tp + tn + fp + fn)
 
     # Precision
-    precision = tp / (tp + fp)
+    precision = tp / (tp + fp) if (tp + fp) != 0 else 0
 
     # Recall (Sensitivity)
-    recall = tp / (tp + fn)
+    recall = tp / (tp + fn) if (tp + fn) != 0 else 0
 
     # Specificity
-    specificity = tn / (tn + fp)
+    specificity = tn / (tn + fp) if (tn + fp) != 0 else 0
 
     # F1 Score
-    f1 = 2 * (precision * recall) / (precision + recall)
+    f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) != 0 else 0
 
     return {
         "Confusion Matrix": [tn, fp, fn, tp],
@@ -275,18 +277,17 @@ def evaluate_classification_metrics(y_true, y_pred, positive_label):
     }
 
 
-
 def plot_calibration_curve(y_true, y_probs, positive_label, n_bins=10):
     """
     Plot a calibration curve to evaluate the accuracy of predicted probabilities.
 
-    This function creates a plot that compares the mean predicted probabilities
-    in each bin with the fraction of positives (true outcomes) in that bin.
-    This helps assess how well the probabilities are calibrated.
+    This function divides both y_probs and y_true into bins and computes:
+    - The central value of each bin (bin_centers).
+    - The fraction of positives in each bin (true_proportions).
 
     Args:
         y_true (array-like): True labels of the data. Can be binary or categorical.
-        y_probs (array-like): Predicted probabilities for the positive class (positive_label).
+        y_probs (array-like): Predicted probabilities for the positive class.
                             Expected values are in the range [0, 1].
         positive_label (int or str): The label that is considered the positive class.
                                     This is used to map categorical labels to binary outcomes.
@@ -295,12 +296,41 @@ def plot_calibration_curve(y_true, y_probs, positive_label, n_bins=10):
 
     Returns:
         dict: A dictionary with the following keys:
-            - "bin_centers": Array of the center values of each bin.
-            - "true_proportions": Array of the fraction of positives in each bin
-
+            - "bin_centers": El punto medio de cada bin.
+            - "true_proportions": Fracción de positivos en cada bin.
     """
-    # TODO
-    """return {"bin_centers": bin_centers, "true_proportions": true_proportions}"""
+    # Labels a binario (1: positive class, 0: resto)
+    y_true_bin = np.array([1 if label == positive_label else 0 for label in y_true])
+
+    bins = np.linspace(0, 1, n_bins + 1)  # Bins equidistantes en [0, 1]
+    bin_indices = np.digitize(y_probs, bins) - 1  # Asignar cada y_prob a un bin
+
+    # Calcular el punto medio de cada bin
+    bin_centers = (bins[:-1] + bins[1:]) / 2  # Media de los límites de cada bin
+
+    # Calcular la fracción de positivos en cada bin
+    true_proportions = np.zeros(n_bins)  # Inicializamos en 0
+    for i in range(n_bins):
+        bin_mask = bin_indices == i  # Filtrar elementos en el bin
+        true_proportions[i] = np.mean(y_true_bin[bin_mask])  # Proporción de positivos
+
+    """# Filtrar bins vacíos para evitar valores incorrectos en la gráfica
+    valid_bins = np.any(bin_indices[:, None] == np.arange(n_bins), axis=0)
+    bin_centers = bin_centers[valid_bins]
+    true_proportions = true_proportions[valid_bins]"""
+
+    # Plot calibration curve
+    plt.figure(figsize=(6, 6))
+    plt.plot(bin_centers, true_proportions, marker='o', linestyle='-', label="Model Calibration")
+    plt.plot([0, 1], [0, 1], linestyle="--", color="gray", label="Perfect Calibration")
+    plt.xlabel("Bin Centers (Midpoint of Each Bin)")
+    plt.ylabel("Fraction of Positives in Bin")
+    plt.title("Calibration Curve (Binned)")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+    return {"bin_centers": bin_centers, "true_proportions": true_proportions}
 
 
 
@@ -329,13 +359,33 @@ def plot_probability_histograms(y_true, y_probs, positive_label, n_bins=10):
                 Array of predicted probabilities for the negative class.
 
     """
-    # TODO
+    # Mapear etiquetas verdaderas a binario
+    y_true_mapped = np.array([1 if label == positive_label else 0 for label in y_true])
 
-    """return {
+    # Crear histogramas para clases positivas y negativas
+    plt.figure(figsize=(12, 6))
+
+    # Histograma para la clase positiva
+    plt.subplot(1, 2, 1)
+    plt.hist(y_probs[y_true_mapped == 1], bins=n_bins, range=(0, 1), alpha=0.75, color='blue', edgecolor='black')
+    plt.title('Histograma de Probabilidades - Clase Positiva')
+    plt.xlabel('Probabilidad Predicha')
+    plt.ylabel('Frecuencia')
+
+    # Histograma para la clase negativa
+    plt.subplot(1, 2, 2)
+    plt.hist(y_probs[y_true_mapped == 0], bins=n_bins, range=(0, 1), alpha=0.75, color='red', edgecolor='black')
+    plt.title('Histograma de Probabilidades - Clase Negativa')
+    plt.xlabel('Probabilidad Predicha')
+    plt.ylabel('Frecuencia')
+
+    plt.tight_layout()
+    plt.show()
+
+    return {
         "array_passed_to_histogram_of_positive_class": y_probs[y_true_mapped == 1],
         "array_passed_to_histogram_of_negative_class": y_probs[y_true_mapped == 0],
-    }"""
-
+    }
 
 
 def plot_roc_curve(y_true, y_probs, positive_label):
