@@ -409,5 +409,35 @@ def plot_roc_curve(y_true, y_probs, positive_label):
             - "tpr": Array of True Positive Rates for each threshold.
 
     """
-    # TODO
-    """return {"fpr": np.array(fpr), "tpr": np.array(tpr)}"""
+
+
+
+    tpr = []
+    fpr = []
+
+    thresholds = np.linspace(0, 1, 11)
+    y_true_mapped = np.array([1 if label == positive_label else 0 for label in y_true])
+
+    for threshold in thresholds:
+
+        y_pred_bin = (y_probs >= threshold).astype(int)
+        tp = np.sum((y_true_mapped == 1) & (y_pred_bin == 1))
+        fp = np.sum((y_true_mapped == 0) & (y_pred_bin == 1))
+        tn = np.sum((y_true_mapped == 0) & (y_pred_bin == 0))
+        fn = np.sum((y_true_mapped == 1) & (y_pred_bin == 0))
+
+        tpr.append(tp / (tp + fn) if (tp + fn) != 0 else 0)
+        fpr.append(fp / (fp + tn) if (fp + tn) != 0 else 0)
+
+    # Plot ROC curve
+    plt.figure(figsize=(6, 6))
+    plt.plot(fpr, tpr, marker='o', linestyle='-', color='b')
+    plt.plot([0, 1], [0, 1], linestyle='--', color='gray')
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('ROC Curve')
+    plt.grid(True)
+    plt.show()
+
+
+    return {"fpr": np.array(fpr), "tpr": np.array(tpr)}
